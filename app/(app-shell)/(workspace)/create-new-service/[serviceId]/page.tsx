@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Save, Eye } from "lucide-react";
+import { ArrowLeft, Plus, Save, Eye, Loader2 } from "lucide-react";
 import Link from "next/link";
 import {
   ServiceBasicInfo,
@@ -16,48 +18,220 @@ import {
 } from "./_components";
 import { toast } from "sonner";
 import { FreelancingServiceService } from "@/lib/modules/freelancingService/freelancingService.service";
-import { CreateFreelancingServiceRequest } from "@/lib/modules/freelancingService/freelancingService.types";
+import {
+  CreateFreelancingServiceRequest,
+  FreelancingService,
+  ServiceStatus,
+  UpdateFreelancingServiceRequest,
+} from "@/lib/modules/freelancingService/freelancingService.types";
 import { useAppSelector } from "@/hooks/redux";
-import { routes } from "@/lib/routes";
+import { CREATE_NEW_SERVICE_SLUG, routes } from "@/lib/routes";
 
-export default function CreateNewServicePage() {
-  const user = useAppSelector((state) => state.auth.user);
-  const [currentStep, setCurrentStep] = useState(1);
-  const [serviceData, setServiceData] = useState({
+type ServiceFormData = {
+  id: string;
+  title: string;
+  description: string;
+  serviceCategoryId: string;
+  serviceSubCategoryId: string;
+  basePrice: number;
+  currency: string;
+  isCustomPricing: boolean;
+  deliveryTime: number;
+  revisionPolicy: number;
+  rushDeliveryAvailable: boolean;
+  rushDeliveryFee: number;
+  deliveryGuarantee: string;
+  gallery: string[];
+  videoIntroduction: string;
+  portfolioItems: string[];
+  requirements: string;
+  communicationLanguage: string[];
+  timezone: string;
+  tags: string[];
+  keywords: string[];
+  metaDescription: string;
+};
+
+function createEmptyServiceForm(): ServiceFormData {
+  return {
     id: "",
-    // Basic Info
     title: "",
     description: "",
     serviceCategoryId: "",
     serviceSubCategoryId: "",
-    
-    // Pricing
     basePrice: 0,
     currency: "USD",
     isCustomPricing: false,
-    
-    // Delivery
     deliveryTime: 1,
     revisionPolicy: 0,
     rushDeliveryAvailable: false,
     rushDeliveryFee: 0,
     deliveryGuarantee: "",
-    
-    // Media
-    gallery: [] as string[],
+    gallery: [],
     videoIntroduction: "",
-    portfolioItems: [] as string[],
-    
-    // Requirements
+    portfolioItems: [],
     requirements: "",
-    communicationLanguage: [] as string[],
+    communicationLanguage: [],
     timezone: "",
-    
-    // SEO
-    tags: [] as string[],
-    keywords: [] as string[],
+    tags: [],
+    keywords: [],
     metaDescription: "",
-  });
+  };
+}
+
+function mapFreelancingServiceToForm(service: FreelancingService): ServiceFormData {
+  return {
+    id: service.id,
+    title: service.title,
+    description: service.description,
+    serviceCategoryId: service.serviceCategoryId,
+    serviceSubCategoryId: service.serviceSubCategoryId,
+    basePrice: service.basePrice ?? 0,
+    currency: service.currency,
+    isCustomPricing: service.isCustomPricing,
+    deliveryTime: service.deliveryTime,
+    revisionPolicy: service.revisionPolicy,
+    rushDeliveryAvailable: service.rushDeliveryAvailable,
+    rushDeliveryFee: service.rushDeliveryFee ?? 0,
+    deliveryGuarantee: service.deliveryGuarantee ?? "",
+    gallery: [...(service.gallery ?? [])],
+    videoIntroduction: service.videoIntroduction ?? "",
+    portfolioItems: [...(service.portfolioItems ?? [])],
+    requirements: service.requirements ?? "",
+    communicationLanguage: [...(service.communicationLanguage ?? [])],
+    timezone: service.timezone ?? "",
+    tags: [...(service.tags ?? [])],
+    keywords: [...(service.keywords ?? [])],
+    metaDescription: service.metaDescription ?? "",
+  };
+}
+
+function formToCreatePayload(
+  data: ServiceFormData,
+  freelancerId: string
+): CreateFreelancingServiceRequest {
+  return {
+    freelancerId,
+    title: data.title.trim(),
+    description: data.description.trim(),
+    serviceCategoryId: data.serviceCategoryId,
+    serviceSubCategoryId: data.serviceSubCategoryId,
+    basePrice: data.basePrice,
+    currency: data.currency,
+    isCustomPricing: data.isCustomPricing,
+    deliveryTime: data.deliveryTime,
+    revisionPolicy: data.revisionPolicy,
+    rushDeliveryAvailable: data.rushDeliveryAvailable,
+    rushDeliveryFee: data.rushDeliveryFee,
+    deliveryGuarantee: data.deliveryGuarantee || undefined,
+    gallery: data.gallery,
+    videoIntroduction: data.videoIntroduction || undefined,
+    portfolioItems: data.portfolioItems,
+    requirements: data.requirements || undefined,
+    communicationLanguage:
+      data.communicationLanguage.length > 0 ? data.communicationLanguage : [],
+    timezone: data.timezone || undefined,
+    tags: data.tags,
+    keywords: data.keywords,
+    metaDescription: data.metaDescription || undefined,
+  };
+}
+
+function formToUpdatePayload(data: ServiceFormData): UpdateFreelancingServiceRequest {
+  return {
+    id: data.id,
+    status: ServiceStatus.DRAFT,
+    title: data.title.trim(),
+    description: data.description.trim(),
+    serviceCategoryId: data.serviceCategoryId,
+    serviceSubCategoryId: data.serviceSubCategoryId,
+    basePrice: data.basePrice,
+    currency: data.currency,
+    isCustomPricing: data.isCustomPricing,
+    deliveryTime: data.deliveryTime,
+    revisionPolicy: data.revisionPolicy,
+    rushDeliveryAvailable: data.rushDeliveryAvailable,
+    rushDeliveryFee: data.rushDeliveryFee,
+    deliveryGuarantee: data.deliveryGuarantee || undefined,
+    gallery: data.gallery,
+    videoIntroduction: data.videoIntroduction || undefined,
+    portfolioItems: data.portfolioItems,
+    requirements: data.requirements || undefined,
+    communicationLanguage:
+      data.communicationLanguage.length > 0 ? data.communicationLanguage : [],
+    timezone: data.timezone || undefined,
+    tags: data.tags,
+    keywords: data.keywords,
+    metaDescription: data.metaDescription || undefined,
+  };
+}
+
+function validateForCreate(data: ServiceFormData): string | null {
+  if (!data.title.trim()) return "Add a service title before saving a draft.";
+  if (!data.description.trim())
+    return "Add a description before saving a draft.";
+  if (!data.serviceCategoryId)
+    return "Select a category before saving a draft.";
+  if (!data.serviceSubCategoryId)
+    return "Select a subcategory before saving a draft.";
+  if (data.deliveryTime < 1)
+    return "Delivery time must be at least 1 day.";
+  return null;
+}
+
+export default function CreateNewServicePage() {
+  const params = useParams<{ serviceId: string }>();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const user = useAppSelector((state) => state.auth.user);
+  const serviceIdParam = params?.serviceId ?? "";
+
+  const [currentStep, setCurrentStep] = useState(1);
+  const [serviceData, setServiceData] = useState<ServiceFormData>(() =>
+    createEmptyServiceForm()
+  );
+  const [loadStatus, setLoadStatus] = useState<
+    "loading" | "error" | "ready"
+  >("loading");
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+
+  const isNewWizard = serviceIdParam === CREATE_NEW_SERVICE_SLUG;
+
+  useEffect(() => {
+    if (!serviceIdParam) {
+      setLoadStatus("error");
+      setLoadError("Missing service id in URL.");
+      return;
+    }
+
+    if (isNewWizard) {
+      setServiceData(createEmptyServiceForm());
+      setLoadError(null);
+      setLoadStatus("ready");
+      return;
+    }
+
+    let cancelled = false;
+    setLoadStatus("loading");
+    setLoadError(null);
+
+    (async () => {
+      const response = await FreelancingServiceService.getServiceById(serviceIdParam);
+      if (cancelled) return;
+      if (response.success && response.data) {
+        setServiceData(mapFreelancingServiceToForm(response.data));
+        setLoadStatus("ready");
+      } else {
+        setLoadError(response.error || "Could not load this service.");
+        setLoadStatus("error");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [serviceIdParam, isNewWizard]);
 
   const steps = [
     { id: 1, title: "Basic Info", description: "Service details and category" },
@@ -80,52 +254,84 @@ export default function CreateNewServicePage() {
     }
   };
 
-  const handleSaveDraft = async () => {
-    // TODO: Implement save as draft functionality
-    console.log("Saving as draft:", serviceData);
-    if (serviceData.title === "") {
-      toast.error("Service title connot be empty for saving as draft");
-      return;
+  const invalidateFreelancerServices = useCallback(() => {
+    if (user?.id) {
+      void queryClient.invalidateQueries({
+        queryKey: ["freelancer-services", user.id],
+      });
     }
+  }, [queryClient, user?.id]);
 
+  const handleSaveDraft = async () => {
     if (!user?.id) {
       toast.error("User not authenticated");
       return;
     }
 
+    const validationError = validateForCreate(serviceData);
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
+    setIsSavingDraft(true);
     try {
-      const response = await FreelancingServiceService.saveAsDraft({
-        ...serviceData,
-        freelancerId: user.id,
-      } as CreateFreelancingServiceRequest);
-      if (response.success) {
-        toast.success("Service saved as draft");
+      if (!serviceData.id) {
+        const response = await FreelancingServiceService.saveAsDraft(
+          formToCreatePayload(serviceData, user.id)
+        );
+        if (response.success && response.data?.id) {
+          const newId = response.data.id;
+          setServiceData((prev) => ({ ...prev, id: newId }));
+          toast.success("Service saved as draft");
+          invalidateFreelancerServices();
+          router.replace(routes.createNewService(newId));
+        } else {
+          toast.error(response.error || "Failed to save draft");
+        }
+      } else {
+        const response = await FreelancingServiceService.updateService(
+          formToUpdatePayload(serviceData)
+        );
+        if (response.success) {
+          toast.success("Draft updated");
+          invalidateFreelancerServices();
+        } else {
+          toast.error(response.error || "Failed to update draft");
+        }
       }
-    } catch (error) {
-      toast.error("Failed to save as draft");
+    } catch {
+      toast.error("Failed to save draft");
+    } finally {
+      setIsSavingDraft(false);
     }
   };
 
   const handlePublish = async () => {
-    // TODO: Implement publish functionality
-    console.log("Publishing service:", serviceData);
-    if (serviceData.title === "") {
-      toast.error("Service title connot be empty for publishing");
+    if (!serviceData.id) {
+      toast.error("Save as draft first before publishing.");
+      return;
+    }
+    if (!serviceData.title.trim()) {
+      toast.error("Service title cannot be empty for publishing");
       return;
     }
 
     try {
-      const response = await FreelancingServiceService.publishService(serviceData.id as string);
+      const response = await FreelancingServiceService.publishService(serviceData.id);
       if (response.success) {
         toast.success("Service published");
+        invalidateFreelancerServices();
+      } else {
+        toast.error(response.error || "Failed to publish");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to publish");
     }
-  }
+  };
 
-  const handleDataUpdate = (updates: Partial<typeof serviceData>) => {
-    setServiceData({ ...serviceData, ...updates });
+  const handleDataUpdate = (updates: Partial<ServiceFormData>) => {
+    setServiceData((prev) => ({ ...prev, ...updates }));
   };
 
   const renderStepContent = () => {
@@ -177,6 +383,37 @@ export default function CreateNewServicePage() {
     }
   };
 
+  if (loadStatus === "loading") {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p>Loading service…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadStatus === "error") {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
+        <Card className="max-w-md w-full">
+          <CardHeader>
+            <CardTitle>Could not open service</CardTitle>
+            <CardDescription>{loadError ?? "Something went wrong."}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline">
+              <Link href={user?.id ? routes.dashboard(user.id) : routes.logIn()}>
+                Back to dashboard
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -197,7 +434,7 @@ export default function CreateNewServicePage() {
               Step {currentStep} of {steps.length}
             </Badge>
           </div>
-          
+
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Create New Service
           </h1>
@@ -276,9 +513,14 @@ export default function CreateNewServicePage() {
                 <Button
                   variant="outline"
                   onClick={handleSaveDraft}
+                  disabled={isSavingDraft}
                   className="gap-2"
                 >
-                  <Save className="h-4 w-4" />
+                  {isSavingDraft ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
                   Save Draft
                 </Button>
 

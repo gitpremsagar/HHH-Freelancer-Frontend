@@ -63,8 +63,10 @@ export interface CreateFreelancingServiceRequest {
   metaDescription?: string;
 }
 
-export interface UpdateFreelancingServiceRequest extends Partial<CreateFreelancingServiceRequest> {
+export interface UpdateFreelancingServiceRequest
+  extends Partial<CreateFreelancingServiceRequest> {
   id: string;
+  status?: ServiceStatus;
 }
 
 export interface FreelancingServiceResponse {

@@ -67,7 +67,16 @@ export const authService = {
     } catch (error) {
       console.error("Login error:", error);
       const axiosError = error as AxiosError<AxiosErrorResponse>;
-      throw new Error(axiosError.response?.data?.message || "Login failed. Please try again.");
+      const apiMessage = axiosError.response?.data?.message;
+      if (apiMessage) {
+        throw new Error(apiMessage);
+      }
+      if (axiosError.code === "ERR_NETWORK" || !axiosError.response) {
+        throw new Error(
+          "Unable to reach the server. Check your connection and try again."
+        );
+      }
+      throw new Error("Login failed. Please try again.");
     }
   },
 

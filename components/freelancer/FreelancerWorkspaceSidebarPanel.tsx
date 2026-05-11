@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useSelector } from "react-redux";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   Bell,
@@ -33,9 +32,7 @@ import { Separator } from "@/components/ui/separator";
 import { RootState } from "@/redux/store";
 import { useGetFreelancerServices } from "@/lib/modules/freelancingService/useGetFreelancingServices.hook";
 import { ServiceStatus } from "@/lib/modules/freelancingService/freelancingService.types";
-import { createFreelancingServiceDraft } from "@/lib/freelancer/create-draft-service";
 import { routes } from "@/lib/routes";
-import { toast } from "sonner";
 
 const SERVICES_SIDEBAR_LIMIT = 15;
 
@@ -63,10 +60,7 @@ function formatStatus(status: ServiceStatus): string {
 
 export function FreelancerWorkspaceSidebarPanel() {
   const pathname = usePathname();
-  const router = useRouter();
-  const queryClient = useQueryClient();
   const user = useSelector((state: RootState) => state.auth.user);
-  const [creatingDraft, setCreatingDraft] = useState(false);
 
   const freelancerId = user?.id ?? "";
 
@@ -95,26 +89,7 @@ export function FreelancerWorkspaceSidebarPanel() {
   const dashActive =
     freelancerId !== "" && pathname.startsWith("/dashboard/");
 
-  const handleCreateDraft = async () => {
-    if (!user || creatingDraft) return;
-    setCreatingDraft(true);
-    try {
-      const result = await createFreelancingServiceDraft({
-        freelancerId: user.id,
-      });
-      if (result.ok) {
-        toast.success("Draft service created successfully");
-        await queryClient.invalidateQueries({
-          queryKey: ["freelancer-services", user.id],
-        });
-        router.push(routes.createNewService(result.serviceId));
-      } else {
-        toast.error(result.error);
-      }
-    } finally {
-      setCreatingDraft(false);
-    }
-  };
+  const createServiceActive = pathname.startsWith("/create-new-service/");
 
   return (
     <>
@@ -196,16 +171,14 @@ export function FreelancerWorkspaceSidebarPanel() {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    onClick={handleCreateDraft}
-                    disabled={creatingDraft}
+                    asChild
+                    isActive={createServiceActive}
                     className="cursor-pointer"
                   >
-                    {creatingDraft ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
+                    <Link href={routes.createNewServiceNew()}>
                       <PlusCircle className="h-4 w-4" />
-                    )}
-                    <span>Create service</span>
+                      <span>Create service</span>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>

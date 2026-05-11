@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { Eye, EyeOff, Heart, Mail, Lock } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, Heart, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -30,9 +30,16 @@ import { setAuth } from "@/lib/modules/auth/auth.redux.slice";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 
+function getSubmitErrorMessage(error: unknown): string {
+  return error instanceof Error
+    ? error.message
+    : "Something went wrong. Please try again.";
+}
+
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const dispatch = useDispatch();
   const router = useRouter();
   const form = useForm({
@@ -44,6 +51,7 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: { email: string; password: string }) => {
+    setLoginError(null);
     setIsLoading(true);
     try {
       const loginData: LoginRequest = {
@@ -60,10 +68,16 @@ export default function LoginPage() {
         router.push("/"); 
       
       } else {
-        toast.error("Login failed. Please check your credentials.");
+        const message =
+          response.message?.trim() ||
+          "We could not sign you in. Please check your details and try again.";
+        setLoginError(message);
+        toast.error(message);
       }
     } catch (error) {
-      toast.error("Login failed. Please check your credentials.");
+      const message = getSubmitErrorMessage(error);
+      setLoginError(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -163,6 +177,16 @@ export default function LoginPage() {
                     </FormItem>
                   )}
                 />
+
+                {loginError ? (
+                  <div
+                    role="alert"
+                    className="flex gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200"
+                  >
+                    <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" aria-hidden />
+                    <span>{loginError}</span>
+                  </div>
+                ) : null}
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">

@@ -2,6 +2,18 @@ import axios from "axios";
 import { store } from "@/redux/store";
 import { authService } from "./modules/auth/auth.service";
 import { resetAuth } from "./modules/auth/auth.redux.slice";
+import { API } from "@/lib/constants";
+
+/** 401 on these routes means invalid credentials / auth outcome, not an expired access token. */
+function isCredentialAuthRequest(url: string | undefined): boolean {
+  if (!url) return false;
+  return (
+    url === API.AUTH.LOGIN ||
+    url === API.AUTH.SIGNUP ||
+    url.includes("/auth/log-in") ||
+    url.includes("/auth/sign-up")
+  );
+}
 
 const customAxios = axios.create({
   headers: {
@@ -30,7 +42,12 @@ customAxios.interceptors.response.use(
     const originalRequest = error.config;
     const status = error.response?.status;
 
-    if (status === 401 && originalRequest && !originalRequest._retry) {
+    if (
+      status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !isCredentialAuthRequest(originalRequest.url)
+    ) {
       originalRequest._retry = true;
 
       try {
