@@ -43,5 +43,8 @@ export const API = {
     PUBLISH: `${BASE_PATH}/freelancing-services/:id/publish`,
     SAVE_AS_DRAFT: `${BASE_PATH}/freelancing-services`,
   },
+  FREELANCER_BROWSE_JOBS: {
+    LIST: `${BASE_PATH}/freelancer/browse/jobs`,
+  },
 }
 
