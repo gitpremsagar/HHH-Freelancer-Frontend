@@ -1,0 +1,93 @@
+import type { LucideIcon } from "lucide-react";
+import {
+  BarChart,
+  Book,
+  BookOpen,
+  Briefcase,
+  Brush,
+  Calculator,
+  Camera,
+  Cloud,
+  Code,
+  Database,
+  DollarSign,
+  Edit,
+  FileCheck,
+  FileText,
+  GraduationCap,
+  Headphones,
+  Image,
+  Languages,
+  Layers,
+  LayoutGrid,
+  Lightbulb,
+  Mail,
+  Megaphone,
+  Mic,
+  Monitor,
+  Music,
+  Palette,
+  PenTool,
+  PieChart,
+  Play,
+  Scale,
+  Smartphone,
+  TrendingUp,
+  User,
+  Users,
+  Video,
+  Wrench,
+  Zap,
+  CircleDot,
+} from "lucide-react";
+
+/** Lucide component names returned by the API (`service-taxonomy` icon field). */
+const TAXONOMY_ICON_MAP: Record<string, LucideIcon> = {
+  BarChart,
+  Book,
+  BookOpen,
+  Briefcase,
+  Brush,
+  Calculator,
+  Camera,
+  Cloud,
+  Code,
+  Database,
+  DollarSign,
+  Edit,
+  FileCheck,
+  FileText,
+  GraduationCap,
+  Headphones,
+  Image,
+  Languages,
+  Layers,
+  Mail,
+  Megaphone,
+  Mic,
+  Monitor,
+  Music,
+  Palette,
+  PenTool,
+  PieChart,
+  Play,
+  Scale,
+  Smartphone,
+  TrendingUp,
+  User,
+  Users,
+  Video,
+  Wrench,
+  Zap,
+};
+
+export const DEFAULT_CATEGORY_SIDEBAR_ICON = LayoutGrid;
+export const DEFAULT_SUBCATEGORY_SIDEBAR_ICON = CircleDot;
+
+export function getTaxonomyLucideIcon(
+  iconName: string | null | undefined,
+  fallback: LucideIcon
+): LucideIcon {
+  if (!iconName) return fallback;
+  return TAXONOMY_ICON_MAP[iconName] ?? fallback;
+}
