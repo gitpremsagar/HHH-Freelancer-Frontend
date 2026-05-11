@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { X, Upload, Image, Video, Plus, Trash2 } from "lucide-react";
+import { RequiredMark } from "./RequiredMark";
 
 interface ServiceMediaData {
   gallery: string[];
@@ -68,9 +69,12 @@ export default function ServiceMedia({ data, onUpdate }: ServiceMediaProps) {
       {/* Service Gallery */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
+          <CardTitle className="flex items-center gap-2 text-lg flex-wrap">
             <Image className="h-5 w-5" />
-            Service Gallery
+            <span>
+              Service Gallery
+              <RequiredMark />
+            </span>
           </CardTitle>
           <CardDescription>
             Upload images that showcase your service quality
@@ -143,7 +147,8 @@ export default function ServiceMedia({ data, onUpdate }: ServiceMediaProps) {
         <CardContent className="space-y-4">
           <div>
             <Label htmlFor="video-url" className="text-base font-medium">
-              Video URL
+              Video URL{" "}
+              <span className="text-muted-foreground font-normal text-sm">(optional)</span>
             </Label>
             <Input
               id="video-url"
@@ -153,7 +158,7 @@ export default function ServiceMedia({ data, onUpdate }: ServiceMediaProps) {
               className="mt-2"
             />
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              YouTube, Vimeo, or direct video URL
+              Optional; if provided, use a valid http(s) URL (YouTube, Vimeo, or direct link).
             </p>
           </div>
 

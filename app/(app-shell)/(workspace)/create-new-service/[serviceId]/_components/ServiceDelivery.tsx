@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Clock, Zap, Shield } from "lucide-react";
+import { RequiredMark } from "./RequiredMark";
 
 interface ServiceDeliveryData {
   deliveryTime: number;
@@ -49,7 +50,8 @@ export default function ServiceDelivery({ data, onUpdate }: ServiceDeliveryProps
             <div className="space-y-4">
               <div>
                 <Label htmlFor="delivery-time" className="text-base font-medium">
-                  Delivery Time (days) *
+                  Delivery Time (days)
+                  <RequiredMark />
                 </Label>
                 <Input
                   id="delivery-time"
@@ -136,6 +138,7 @@ export default function ServiceDelivery({ data, onUpdate }: ServiceDeliveryProps
               <div>
                 <Label htmlFor="rush-fee" className="text-base font-medium">
                   Rush Delivery Fee
+                  <RequiredMark />
                 </Label>
                 <Input
                   id="rush-fee"

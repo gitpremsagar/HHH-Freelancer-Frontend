@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, DollarSign } from "lucide-react";
+import { RequiredMark } from "./RequiredMark";
 
 interface ServicePricingData {
   basePrice: number;
@@ -141,11 +142,18 @@ export default function ServicePricing({ data, onUpdate }: ServicePricingProps) 
             />
           </div>
 
+          {data.isCustomPricing && (
+            <p className="text-sm text-muted-foreground">
+              Base price is optional while custom pricing is enabled. Clients will request quotes instead.
+            </p>
+          )}
+
           {!data.isCustomPricing && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="base-price" className="text-base font-medium">
-                  Base Price *
+                  {"Currency & base price"}
+                  <RequiredMark />
                 </Label>
                 <div className="flex gap-2 mt-2">
                   <Select

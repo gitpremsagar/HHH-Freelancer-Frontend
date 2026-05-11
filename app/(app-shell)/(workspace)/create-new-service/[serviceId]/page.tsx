@@ -26,6 +26,11 @@ import {
 } from "@/lib/modules/freelancingService/freelancingService.types";
 import { useAppSelector } from "@/hooks/redux";
 import { CREATE_NEW_SERVICE_SLUG, routes } from "@/lib/routes";
+import {
+  validateWizardStep,
+  validateAllWizardSteps,
+  type WizardStepNumber,
+} from "./wizardStepValidation";
 
 type ServiceFormData = {
   id: string;
@@ -168,8 +173,8 @@ function formToUpdatePayload(data: ServiceFormData): UpdateFreelancingServiceReq
 
 function validateForCreate(data: ServiceFormData): string | null {
   if (!data.title.trim()) return "Add a service title before saving a draft.";
-  if (!data.description.trim())
-    return "Add a description before saving a draft.";
+  if (data.description.trim().length < 10)
+    return "Description must be at least 10 characters before saving a draft.";
   if (!data.serviceCategoryId)
     return "Select a category before saving a draft.";
   if (!data.serviceSubCategoryId)
@@ -195,6 +200,8 @@ export default function CreateNewServicePage() {
   >("loading");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [maxReachedStep, setMaxReachedStep] = useState(1);
+  const [stepError, setStepError] = useState<string | null>(null);
 
   const isNewWizard = serviceIdParam === CREATE_NEW_SERVICE_SLUG;
 
@@ -209,6 +216,9 @@ export default function CreateNewServicePage() {
       setServiceData(createEmptyServiceForm());
       setLoadError(null);
       setLoadStatus("ready");
+      setMaxReachedStep(1);
+      setCurrentStep(1);
+      setStepError(null);
       return;
     }
 
@@ -222,6 +232,8 @@ export default function CreateNewServicePage() {
       if (response.success && response.data) {
         setServiceData(mapFreelancingServiceToForm(response.data));
         setLoadStatus("ready");
+        setMaxReachedStep(6);
+        setStepError(null);
       } else {
         setLoadError(response.error || "Could not load this service.");
         setLoadStatus("error");
@@ -243,15 +255,46 @@ export default function CreateNewServicePage() {
   ];
 
   const handleNext = () => {
-    if (currentStep < steps.length) {
-      setCurrentStep(currentStep + 1);
+    if (currentStep >= steps.length) return;
+    if (currentStep <= 5) {
+      const result = validateWizardStep(
+        currentStep as WizardStepNumber,
+        serviceData
+      );
+      if (!result.ok) {
+        setStepError(result.message);
+        toast.error(result.message);
+        return;
+      }
     }
+    setStepError(null);
+    const nextStep = currentStep + 1;
+    setCurrentStep(nextStep);
+    setMaxReachedStep((prev) => Math.max(prev, nextStep));
   };
 
   const handlePrevious = () => {
     if (currentStep > 1) {
+      setStepError(null);
       setCurrentStep(currentStep - 1);
     }
+  };
+
+  const handleSidebarStepClick = (targetStep: number) => {
+    if (targetStep === currentStep) return;
+    if (targetStep < currentStep) {
+      setStepError(null);
+      setCurrentStep(targetStep);
+      return;
+    }
+    if (targetStep > maxReachedStep) {
+      toast.error(
+        "Complete each step using Next to unlock later steps, or save and reopen your draft."
+      );
+      return;
+    }
+    setStepError(null);
+    setCurrentStep(targetStep);
   };
 
   const invalidateFreelancerServices = useCallback(() => {
@@ -312,8 +355,9 @@ export default function CreateNewServicePage() {
       toast.error("Save as draft first before publishing.");
       return;
     }
-    if (!serviceData.title.trim()) {
-      toast.error("Service title cannot be empty for publishing");
+    const all = validateAllWizardSteps(serviceData);
+    if (!all.ok) {
+      toast.error(all.message);
       return;
     }
 
@@ -331,6 +375,7 @@ export default function CreateNewServicePage() {
   };
 
   const handleDataUpdate = (updates: Partial<ServiceFormData>) => {
+    setStepError(null);
     setServiceData((prev) => ({ ...prev, ...updates }));
   };
 
@@ -454,17 +499,26 @@ export default function CreateNewServicePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
-                {steps.map((step) => (
+                {steps.map((step) => {
+                  const lockedForward =
+                    step.id > currentStep && step.id > maxReachedStep;
+                  return (
                   <div
                     key={step.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer ${
+                    className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                      lockedForward
+                        ? "opacity-50 cursor-not-allowed"
+                        : "cursor-pointer"
+                    } ${
                       currentStep === step.id
                         ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
                         : currentStep > step.id
                         ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300"
-                        : "hover:bg-gray-50 dark:hover:bg-gray-800"
+                        : !lockedForward
+                        ? "hover:bg-gray-50 dark:hover:bg-gray-800"
+                        : ""
                     }`}
-                    onClick={() => setCurrentStep(step.id)}
+                    onClick={() => handleSidebarStepClick(step.id)}
                   >
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
@@ -484,7 +538,8 @@ export default function CreateNewServicePage() {
                       </div>
                     </div>
                   </div>
-                ))}
+                );
+                })}
               </CardContent>
             </Card>
           </div>
@@ -496,6 +551,15 @@ export default function CreateNewServicePage() {
                 {renderStepContent()}
               </CardContent>
             </Card>
+
+            {stepError ? (
+              <div
+                role="alert"
+                className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200"
+              >
+                {stepError}
+              </div>
+            ) : null}
 
             {/* Navigation Buttons */}
             <div className="flex justify-between items-center mt-6">

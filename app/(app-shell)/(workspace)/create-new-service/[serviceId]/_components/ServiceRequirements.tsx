@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { X, Plus, Globe, Clock, MessageSquare } from "lucide-react";
+import { RequiredMark } from "./RequiredMark";
 
 interface ServiceRequirementsData {
   requirements: string;
@@ -91,6 +92,7 @@ export default function ServiceRequirements({ data, onUpdate }: ServiceRequireme
             <div>
               <Label htmlFor="requirements" className="text-base font-medium">
                 Service Requirements
+                <RequiredMark />
               </Label>
               <Textarea
                 id="requirements"
@@ -114,9 +116,12 @@ export default function ServiceRequirements({ data, onUpdate }: ServiceRequireme
         {/* Communication Languages */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
+            <CardTitle className="flex items-center gap-2 text-lg flex-wrap">
               <Globe className="h-5 w-5" />
-              Communication Languages
+              <span>
+                Communication Languages
+                <RequiredMark />
+              </span>
             </CardTitle>
             <CardDescription>
               What languages can you communicate in?
@@ -214,6 +219,7 @@ export default function ServiceRequirements({ data, onUpdate }: ServiceRequireme
             <div>
               <Label htmlFor="timezone" className="text-base font-medium">
                 Timezone
+                <RequiredMark />
               </Label>
               <Select
                 value={data.timezone}

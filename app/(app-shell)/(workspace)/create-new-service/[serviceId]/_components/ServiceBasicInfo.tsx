@@ -12,6 +12,7 @@ import { X, Plus } from "lucide-react";
 import { useGetServiceCategories } from "@/lib/modules/serviceCategory/useGetServiceCategories.hook";
 import { useGetServiceSubCategories } from "@/lib/modules/subCategory/useGetServiceSubCategories.hook";
 import { ServiceCategory } from "@/lib/modules/serviceCategory/serviceCategory.type";
+import { RequiredMark } from "./RequiredMark";
 
 interface ServiceBasicInfoData {
   title: string;
@@ -65,7 +66,8 @@ export default function ServiceBasicInfo({ data, onUpdate }: ServiceBasicInfoPro
         {/* Service Title */}
         <div className="md:col-span-2">
           <Label htmlFor="title" className="text-base font-medium">
-            Service Title *
+            Service Title
+            <RequiredMark />
           </Label>
           <Input
             id="title"
@@ -82,7 +84,8 @@ export default function ServiceBasicInfo({ data, onUpdate }: ServiceBasicInfoPro
         {/* Service Description */}
         <div className="md:col-span-2">
           <Label htmlFor="description" className="text-base font-medium">
-            Service Description *
+            Service Description
+            <RequiredMark />
           </Label>
           <Textarea
             id="description"
@@ -99,7 +102,8 @@ export default function ServiceBasicInfo({ data, onUpdate }: ServiceBasicInfoPro
         {/* Category Selection */}
         <div>
           <Label htmlFor="category" className="text-base font-medium">
-            Service Category *
+            Service Category
+            <RequiredMark />
           </Label>
           <Select
             value={data.serviceCategoryId}
@@ -125,7 +129,8 @@ export default function ServiceBasicInfo({ data, onUpdate }: ServiceBasicInfoPro
         {/* Subcategory Selection */}
         <div>
           <Label htmlFor="subcategory" className="text-base font-medium">
-            Service Subcategory *
+            Service Subcategory
+            <RequiredMark />
           </Label>
           <Select
             value={data.serviceSubCategoryId}
