@@ -64,9 +64,11 @@ export interface CreateFreelancingServiceRequest {
 }
 
 export interface UpdateFreelancingServiceRequest
-  extends Partial<CreateFreelancingServiceRequest> {
+  extends Partial<Omit<CreateFreelancingServiceRequest, "videoIntroduction">> {
   id: string;
   status?: ServiceStatus;
+  /** Send `null` to remove a stored intro video. */
+  videoIntroduction?: string | null;
 }
 
 export interface FreelancingServiceResponse {

@@ -31,6 +31,7 @@ import {
   validateAllWizardSteps,
   type WizardStepNumber,
 } from "./wizardStepValidation";
+import { normalizeVideoIntroductionForPayload } from "@/lib/youtubeVideoIntroduction";
 
 type ServiceFormData = {
   id: string;
@@ -130,7 +131,7 @@ function formToCreatePayload(
     rushDeliveryFee: data.rushDeliveryFee,
     deliveryGuarantee: data.deliveryGuarantee || undefined,
     gallery: data.gallery,
-    videoIntroduction: data.videoIntroduction || undefined,
+    videoIntroduction: normalizeVideoIntroductionForPayload(data.videoIntroduction),
     portfolioItems: data.portfolioItems,
     requirements: data.requirements || undefined,
     communicationLanguage:
@@ -159,7 +160,10 @@ function formToUpdatePayload(data: ServiceFormData): UpdateFreelancingServiceReq
     rushDeliveryFee: data.rushDeliveryFee,
     deliveryGuarantee: data.deliveryGuarantee || undefined,
     gallery: data.gallery,
-    videoIntroduction: data.videoIntroduction || undefined,
+    videoIntroduction:
+      data.videoIntroduction.trim() === ""
+        ? null
+        : normalizeVideoIntroductionForPayload(data.videoIntroduction),
     portfolioItems: data.portfolioItems,
     requirements: data.requirements || undefined,
     communicationLanguage:

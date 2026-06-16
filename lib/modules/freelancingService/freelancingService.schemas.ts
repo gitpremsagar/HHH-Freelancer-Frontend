@@ -1,5 +1,9 @@
 import { z } from "zod";
 import { SERVICE_CATEGORY_ENUM, SERVICE_SUBCATEGORY_ENUM } from "@/lib/constants/serviceTaxonomyEnums";
+import {
+  canonicalYoutubeEmbedUrl,
+  parseYoutubeVideoIdFromInput,
+} from "@/lib/youtubeVideoIntroduction";
 
 const categoryEnum = z.enum(SERVICE_CATEGORY_ENUM);
 const subCategoryEnum = z.enum(SERVICE_SUBCATEGORY_ENUM);
@@ -18,7 +22,25 @@ export const createFreelancingServiceSchema = z.object({
   rushDeliveryFee: z.number().min(0, "Rush delivery fee must be non-negative").optional(),
   deliveryGuarantee: z.string().optional(),
   gallery: z.array(z.string()).default([]),
-  videoIntroduction: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  videoIntroduction: z.preprocess(
+    (val) => {
+      if (val === null || val === undefined) return undefined;
+      if (typeof val !== "string") return val;
+      const t = val.trim();
+      return t === "" ? undefined : t;
+    },
+    z
+      .union([z.undefined(), z.string().max(20000)])
+      .refine(
+        (val) => val === undefined || parseYoutubeVideoIdFromInput(val) !== null,
+        { message: "Must be a valid YouTube URL or iframe embed code" }
+      )
+      .transform((val) => {
+        if (val === undefined) return undefined;
+        const id = parseYoutubeVideoIdFromInput(val)!;
+        return canonicalYoutubeEmbedUrl(id);
+      })
+  ),
   portfolioItems: z.array(z.string()).default([]),
   requirements: z.string().optional(),
   communicationLanguage: z.array(z.string()).min(1, "At least one communication language is required"),

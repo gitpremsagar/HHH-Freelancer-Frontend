@@ -3,6 +3,8 @@
  * Aligns with createFreelancingServiceSchema and ServicePreview completion rules.
  */
 
+import { parseYoutubeVideoIdFromInput } from "@/lib/youtubeVideoIntroduction";
+
 export type WizardStepNumber = 1 | 2 | 3 | 4 | 5;
 
 /** Subset of form fields used by step validators (structurally compatible with page ServiceFormData). */
@@ -28,15 +30,6 @@ export type WizardFormData = {
 export type WizardStepResult =
   | { ok: true }
   | { ok: false; message: string };
-
-function isValidHttpUrl(value: string): boolean {
-  try {
-    const u = new URL(value.trim());
-    return u.protocol === "http:" || u.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
 
 export function validateWizardStep(
   step: WizardStepNumber,
@@ -113,10 +106,10 @@ export function validateWizardStep(
         };
       }
       const video = data.videoIntroduction.trim();
-      if (video && !isValidHttpUrl(video)) {
+      if (video && !parseYoutubeVideoIdFromInput(video)) {
         return {
           ok: false,
-          message: "Video URL must be a valid http(s) link.",
+          message: "Video must be a valid YouTube link or YouTube iframe embed code.",
         };
       }
       return { ok: true };

@@ -9,6 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { X, Upload, Image, Video, Plus, Trash2 } from "lucide-react";
 import { RequiredMark } from "./RequiredMark";
+import {
+  canonicalYoutubeEmbedUrl,
+  parseYoutubeVideoIdFromInput,
+  YOUTUBE_EMBED_ALLOW,
+} from "@/lib/youtubeVideoIntroduction";
 
 interface ServiceMediaData {
   gallery: string[];
@@ -141,39 +146,53 @@ export default function ServiceMedia({ data, onUpdate }: ServiceMediaProps) {
             Video Introduction
           </CardTitle>
           <CardDescription>
-            Add a video to introduce yourself and your service
+            Paste your YouTube embed code (iframe) or a YouTube watch / embed / youtu.be link. Optional.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="video-url" className="text-base font-medium">
-              Video URL{" "}
+            <Label htmlFor="video-intro" className="text-base font-medium">
+              YouTube intro{" "}
               <span className="text-muted-foreground font-normal text-sm">(optional)</span>
             </Label>
-            <Input
-              id="video-url"
+            <Textarea
+              id="video-intro"
               value={data.videoIntroduction}
               onChange={(e) => onUpdate({ videoIntroduction: e.target.value })}
-              placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
-              className="mt-2"
+              placeholder='e.g. <iframe src="https://www.youtube.com/embed/..."></iframe> or https://www.youtube.com/watch?v=...'
+              className="mt-2 min-h-[100px] font-mono text-sm"
+              rows={4}
             />
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Optional; if provided, use a valid http(s) URL (YouTube, Vimeo, or direct link).
+              Only YouTube links or embeds are accepted. The preview below updates when the input is valid.
             </p>
           </div>
 
-          {data.videoIntroduction && (
-            <div className="mt-4">
-              <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <Video className="h-12 w-12 mx-auto text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Video preview will appear here
-                  </p>
+          {(() => {
+            const t = data.videoIntroduction.trim();
+            const videoId = t ? parseYoutubeVideoIdFromInput(t) : null;
+            const iframeSrc = videoId ? canonicalYoutubeEmbedUrl(videoId) : null;
+
+            return iframeSrc ? (
+              <div className="mt-4 space-y-2">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">Preview</p>
+                <div className="relative aspect-video overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
+                  <iframe
+                    title="Video introduction preview"
+                    src={iframeSrc}
+                    className="absolute inset-0 h-full w-full border-0"
+                    allow={YOUTUBE_EMBED_ALLOW}
+                    allowFullScreen
+                    referrerPolicy="strict-origin-when-cross-origin"
+                  />
                 </div>
               </div>
-            </div>
-          )}
+            ) : t ? (
+              <p className="text-sm text-amber-700 dark:text-amber-400">
+                Could not detect a valid YouTube video. Check the link or embed code.
+              </p>
+            ) : null;
+          })()}
         </CardContent>
       </Card>
 
