@@ -1,5 +1,5 @@
 // export const API_HOSTNAME = process.env.NEXT_PUBLIC_API_HOSTNAME || "http://localhost:4000";
-export const API_HOSTNAME = process.env.NODE_ENV === "development" ? "http://localhost:4000" : "https://hire-helping-hand-backend.vercel.app";
+export const API_HOSTNAME = process.env.NODE_ENV === "development" ? "http://localhost:4000" : "https://api.hirehelpinghand.com/";
 
 export const BASE_PATH = `${API_HOSTNAME}/api/v1`;
 
